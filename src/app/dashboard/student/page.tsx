@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LogoutButton from "@/components/LogoutButton";
 
 type SubjectStat = {
   subjectId: string;
@@ -15,9 +16,20 @@ type AttendanceData = {
   subjects: SubjectStat[];
 };
 
+type SubmissionItem = {
+  id: string;
+  status: "SUBMITTED" | "NOT_SUBMITTED";
+  assignment: {
+    title: string;
+    dueDate: string;
+    subject: { name: string };
+  };
+};
+
 export default function StudentDashboard() {
   const [data, setData] = useState<AttendanceData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [assignments, setAssignments] = useState<SubmissionItem[]>([]);
 
   useEffect(() => {
     fetch("/api/student/attendance")
@@ -26,6 +38,10 @@ export default function StudentDashboard() {
         setData(data);
         setLoading(false);
       });
+
+    fetch("/api/student/assignments")
+      .then((res) => res.json())
+      .then(setAssignments);
   }, []);
 
   if (loading) return <div className="p-8">Loading...</div>;
@@ -33,7 +49,10 @@ export default function StudentDashboard() {
 
   return (
     <div className="mx-auto max-w-2xl p-8">
-      <h1 className="mb-6 text-2xl font-bold">My Attendance</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Student Dashboard</h1>
+        <LogoutButton />
+      </div>
 
       <div className="mb-8 rounded-lg bg-blue-50 p-6 text-center">
         <p className="text-sm text-gray-600">Overall Attendance</p>
@@ -44,7 +63,7 @@ export default function StudentDashboard() {
       </div>
 
       <h2 className="mb-3 font-semibold text-gray-800">Subject-wise Breakdown</h2>
-      <div className="space-y-3">
+      <div className="mb-8 space-y-3">
         {data.subjects.map((s) => (
           <div
             key={s.subjectId}
@@ -63,6 +82,38 @@ export default function StudentDashboard() {
             >
               {s.percentage}%
             </p>
+          </div>
+        ))}
+      </div>
+
+      <hr className="my-8" />
+
+      <h2 className="mb-3 text-xl font-bold">My Assignments</h2>
+      <div className="space-y-3">
+        {assignments.length === 0 && (
+          <p className="text-sm text-gray-500">No assignments yet.</p>
+        )}
+        {assignments.map((sub) => (
+          <div
+            key={sub.id}
+            className="flex items-center justify-between rounded border border-gray-200 p-4"
+          >
+            <div>
+              <p className="font-medium">{sub.assignment.title}</p>
+              <p className="text-sm text-gray-500">
+                {sub.assignment.subject.name} — Due{" "}
+                {new Date(sub.assignment.dueDate).toLocaleDateString()}
+              </p>
+            </div>
+            <span
+              className={`rounded px-3 py-1 text-sm font-medium ${
+                sub.status === "SUBMITTED"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {sub.status === "SUBMITTED" ? "Submitted" : "Not Submitted"}
+            </span>
           </div>
         ))}
       </div>

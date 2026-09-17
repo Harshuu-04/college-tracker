@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LogoutButton from "@/components/LogoutButton";
 
 type Subject = {
   id: string;
@@ -14,6 +15,20 @@ type Student = {
   user: { name: string };
 };
 
+type Submission = {
+  id: string;
+  status: "SUBMITTED" | "NOT_SUBMITTED";
+  student: { rollNo: string; user: { name: string } };
+};
+
+type Assignment = {
+  id: string;
+  title: string;
+  dueDate: string;
+  subject: { name: string };
+  submissions: Submission[];
+};
+
 export default function TeacherDashboard() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>("");
@@ -22,6 +37,11 @@ export default function TeacherDashboard() {
   const [date] = useState(new Date().toISOString().split("T")[0]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDueDate, setNewDueDate] = useState("");
+  const [creatingAssignment, setCreatingAssignment] = useState(false);
 
   useEffect(() => {
     fetch("/api/teacher/subjects")
@@ -45,6 +65,16 @@ export default function TeacherDashboard() {
         setAttendance(initial);
       });
   }, [selectedSubject]);
+
+  const fetchAssignments = () => {
+    fetch("/api/teacher/assignments")
+      .then((res) => res.json())
+      .then(setAssignments);
+  };
+
+  useEffect(() => {
+    fetchAssignments();
+  }, []);
 
   const toggleStudent = (studentId: string) => {
     setAttendance((prev) => ({
@@ -74,9 +104,40 @@ export default function TeacherDashboard() {
     }
   };
 
+  const handleCreateAssignment = async () => {
+    if (!selectedSubject || !newTitle || !newDueDate) return;
+    setCreatingAssignment(true);
+    await fetch("/api/teacher/assignments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: newTitle,
+        dueDate: newDueDate,
+        subjectId: selectedSubject,
+      }),
+    });
+    setNewTitle("");
+    setNewDueDate("");
+    setCreatingAssignment(false);
+    fetchAssignments();
+  };
+
+  const toggleSubmission = async (submissionId: string, current: string) => {
+    const newStatus = current === "SUBMITTED" ? "NOT_SUBMITTED" : "SUBMITTED";
+    await fetch("/api/teacher/submissions", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ submissionId, status: newStatus }),
+    });
+    fetchAssignments();
+  };
+
   return (
     <div className="mx-auto max-w-2xl p-8">
-      <h1 className="mb-1 text-2xl font-bold">Teacher Dashboard</h1>
+      <div className="mb-1 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
+        <LogoutButton />
+      </div>
       <p className="mb-6 text-gray-600">Date: {date}</p>
 
       <div className="mb-6">
@@ -128,6 +189,68 @@ export default function TeacherDashboard() {
       )}
 
       {message && <p className="mt-4 text-sm text-green-600">{message}</p>}
+
+      <hr className="my-8" />
+
+      <h2 className="mb-3 text-xl font-bold">Assignments</h2>
+
+      <div className="mb-6 space-y-2 rounded border border-gray-200 p-4">
+        <p className="text-sm text-gray-600">
+          Create assignment for:{" "}
+          {subjects.find((s) => s.id === selectedSubject)?.name || "select a subject above"}
+        </p>
+        <input
+          type="text"
+          placeholder="Assignment title"
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          className="w-full rounded border border-gray-300 p-2"
+        />
+        <input
+          type="date"
+          value={newDueDate}
+          onChange={(e) => setNewDueDate(e.target.value)}
+          className="w-full rounded border border-gray-300 p-2"
+        />
+        <button
+          onClick={handleCreateAssignment}
+          disabled={creatingAssignment || !selectedSubject}
+          className="w-full rounded bg-green-600 py-2 font-medium text-white hover:bg-green-700 disabled:opacity-50"
+        >
+          {creatingAssignment ? "Creating..." : "Create Assignment"}
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {assignments.map((a) => (
+          <div key={a.id} className="rounded border border-gray-200 p-4">
+            <p className="font-semibold">
+              {a.title} — {a.subject.name}
+            </p>
+            <p className="mb-2 text-sm text-gray-500">
+              Due: {new Date(a.dueDate).toLocaleDateString()}
+            </p>
+            <div className="space-y-1">
+              {a.submissions.map((sub) => (
+                <label
+                  key={sub.id}
+                  className="flex items-center justify-between rounded bg-gray-50 p-2 text-sm"
+                >
+                  <span>
+                    {sub.student.rollNo} — {sub.student.user.name}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={sub.status === "SUBMITTED"}
+                    onChange={() => toggleSubmission(sub.id, sub.status)}
+                    className="h-4 w-4"
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -149,6 +149,8 @@ model Marks {
   examType  ExamType
   score     Float
   maxScore  Float
+
+  @@unique([studentId, subjectId, examType])
 }
 
 model Placement {

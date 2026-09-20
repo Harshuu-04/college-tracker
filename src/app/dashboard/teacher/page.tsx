@@ -43,6 +43,12 @@ export default function TeacherDashboard() {
   const [newDueDate, setNewDueDate] = useState("");
   const [creatingAssignment, setCreatingAssignment] = useState(false);
 
+  const [examType, setExamType] = useState<"MID_SEM" | "END_SEM">("MID_SEM");
+  const [maxScore, setMaxScore] = useState("100");
+  const [marksMap, setMarksMap] = useState<Record<string, string>>({});
+  const [savingMarks, setSavingMarks] = useState(false);
+  const [marksMessage, setMarksMessage] = useState("");
+
   useEffect(() => {
     fetch("/api/teacher/subjects")
       .then((res) => res.json())
@@ -130,6 +136,32 @@ export default function TeacherDashboard() {
       body: JSON.stringify({ submissionId, status: newStatus }),
     });
     fetchAssignments();
+  };
+
+  const handleMarksChange = (studentId: string, value: string) => {
+    setMarksMap((prev) => ({ ...prev, [studentId]: value }));
+  };
+
+  const handleSaveMarks = async () => {
+    setSavingMarks(true);
+    setMarksMessage("");
+    const res = await fetch("/api/teacher/marks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subjectId: selectedSubject,
+        examType,
+        marksMap,
+        maxScore,
+      }),
+    });
+    const data = await res.json();
+    setSavingMarks(false);
+    if (data.success) {
+      setMarksMessage(`Saved marks for ${data.count} students.`);
+    } else {
+      setMarksMessage("Failed to save marks.");
+    }
   };
 
   return (
@@ -251,6 +283,59 @@ export default function TeacherDashboard() {
           </div>
         ))}
       </div>
+
+      <hr className="my-8" />
+
+      <h2 className="mb-3 text-xl font-bold">Enter Marks</h2>
+
+      {students.length > 0 ? (
+        <div className="space-y-3 rounded border border-gray-200 p-4">
+          <div className="flex gap-3">
+            <select
+              value={examType}
+              onChange={(e) => setExamType(e.target.value as "MID_SEM" | "END_SEM")}
+              className="rounded border border-gray-300 p-2"
+            >
+              <option value="MID_SEM">Mid Sem</option>
+              <option value="END_SEM">End Sem</option>
+            </select>
+            <input
+              type="number"
+              value={maxScore}
+              onChange={(e) => setMaxScore(e.target.value)}
+              placeholder="Max score"
+              className="w-28 rounded border border-gray-300 p-2"
+            />
+          </div>
+
+          {students.map((student) => (
+            <div key={student.id} className="flex items-center justify-between gap-3">
+              <span className="text-sm">
+                {student.rollNo} — {student.user.name}
+              </span>
+              <input
+                type="number"
+                value={marksMap[student.id] || ""}
+                onChange={(e) => handleMarksChange(student.id, e.target.value)}
+                placeholder="Score"
+                className="w-24 rounded border border-gray-300 p-1 text-sm"
+              />
+            </div>
+          ))}
+
+          <button
+            onClick={handleSaveMarks}
+            disabled={savingMarks}
+            className="w-full rounded bg-purple-600 py-2 font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+          >
+            {savingMarks ? "Saving..." : "Save Marks"}
+          </button>
+
+          {marksMessage && <p className="text-sm text-green-600">{marksMessage}</p>}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-500">Select a subject above to enter marks.</p>
+      )}
     </div>
   );
 }

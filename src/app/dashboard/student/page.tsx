@@ -11,6 +11,14 @@ type SubjectStat = {
   percentage: number;
 };
 
+type MarkItem = {
+  id: string;
+  examType: "MID_SEM" | "END_SEM";
+  score: number;
+  maxScore: number;
+  subject: { name: string };
+};
+
 type AttendanceData = {
   overall: { total: number; present: number; percentage: number };
   subjects: SubjectStat[];
@@ -30,6 +38,7 @@ export default function StudentDashboard() {
   const [data, setData] = useState<AttendanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [assignments, setAssignments] = useState<SubmissionItem[]>([]);
+  const [marks, setMarks] = useState<MarkItem[]>([]);
 
   useEffect(() => {
     fetch("/api/student/attendance")
@@ -38,6 +47,10 @@ export default function StudentDashboard() {
         setData(data);
         setLoading(false);
       });
+
+    fetch("/api/student/marks")
+      .then((res) => res.json())
+      .then(setMarks);
 
     fetch("/api/student/assignments")
       .then((res) => res.json())
@@ -117,6 +130,29 @@ export default function StudentDashboard() {
           </div>
         ))}
       </div>
+
+      <hr className="my-8" />
+
+      <h2 className="mb-3 text-xl font-bold">My Marks</h2>
+      <div className="space-y-3">
+         {marks.length === 0 && <p className="text-sm text-gray-500">No marks yet.</p>}
+         {marks.map((m) => (
+    <div
+      key={m.id}
+      className="flex items-center justify-between rounded border border-gray-200 p-4"
+    >
+      <div>
+        <p className="font-medium">{m.subject.name}</p>
+        <p className="text-sm text-gray-500">
+          {m.examType === "MID_SEM" ? "Mid Sem" : "End Sem"}
+        </p>
+      </div>
+      <p className="text-lg font-bold text-purple-700">
+        {m.score} / {m.maxScore}
+      </p>
+    </div>
+  ))}
+    </div>
     </div>
   );
 }

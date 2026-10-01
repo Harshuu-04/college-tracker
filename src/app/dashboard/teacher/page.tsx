@@ -188,6 +188,15 @@ export default function TeacherDashboard() {
         </select>
       </div>
 
+      {selectedSubject && (
+        <a
+          href={`/api/teacher/attendance-sheet?classId=${subjects.find((s) => s.id === selectedSubject)?.class.id}`}
+          className="mb-6 inline-block rounded bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+        >
+          Download Attendance Sheet (CSV)
+        </a>
+      )}
+
       {students.length > 0 && (
         <div className="mb-6 space-y-2">
           <h2 className="font-semibold text-gray-800">Students</h2>

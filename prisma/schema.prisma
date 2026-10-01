@@ -65,8 +65,10 @@ model Teacher {
 }
 
 model Class {
-  id   String @id @default(cuid())
-  name String // e.g. "CSE 3rd Year - A"
+  id    String @id @default(cuid())
+  name  String // e.g. "CSE 3rd Year - A"
+  year  Int?   // e.g. 3
+  batch String?// e.g. "2027" (graduating year)
 
   proctorId String?
   proctor   Teacher? @relation("ProctorClass", fields: [proctorId], references: [id])
@@ -82,6 +84,18 @@ model Student {
   rollNo    String @unique
   classId   String
   class     Class  @relation(fields: [classId], references: [id])
+
+  cgpa          Float?
+  techStack     String? // comma-separated, e.g. "React,Node.js,Python"
+  resumeUrl     String?
+  profilePicUrl String?
+  targetRole    String? // e.g. "SDE", "Data Analyst"
+  targetDomain  String? // e.g. "Backend", "ML"
+  githubUrl     String?
+  leetcodeUrl   String?
+  gfgUrl        String?
+  linkedinUrl   String?
+  projects      String? @db.Text // JSON string: [{title, description, link}]
 
   attendance  Attendance[]
   submissions Submission[]
@@ -154,10 +168,12 @@ model Marks {
 }
 
 model Placement {
-  id        String          @id @default(cuid())
-  studentId String          @unique
-  student   Student         @relation(fields: [studentId], references: [id])
-  status    PlacementStatus @default(NOT_PLACED)
-  company   String?
-  role      String?
+  id            String          @id @default(cuid())
+  studentId     String          @unique
+  student       Student         @relation(fields: [studentId], references: [id])
+  status        PlacementStatus @default(NOT_PLACED)
+  company       String?
+  role          String?
+  packageLPA    Float?
+  offerLetterUrl String?
 }

@@ -10,6 +10,14 @@ type Project = {
   link: string;
 };
 
+type PlacementData = {
+  status: "NOT_PLACED" | "PLACED" | "INTERN";
+  company: string | null;
+  role: string | null;
+  packageLPA: number | null;
+  offerLetterUrl: string | null;
+};
+
 type StudentProfile = {
   id: string;
   rollNo: string;
@@ -26,6 +34,7 @@ type StudentProfile = {
   gfgUrl: string | null;
   linkedinUrl: string | null;
   projects: string | null;
+  placement: PlacementData | null;
 };
 
 export default function StudentDashboard() {
@@ -46,10 +55,25 @@ export default function StudentDashboard() {
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
 
+  const [placementStatus, setPlacementStatus] = useState<"NOT_PLACED" | "PLACED" | "INTERN">("NOT_PLACED");
+  const [company, setCompany] = useState("");
+  const [role, setRole] = useState("");
+  const [packageLPA, setPackageLPA] = useState("");
+  const [offerLetterUrl, setOfferLetterUrl] = useState("");
+  const [savingPlacement, setSavingPlacement] = useState(false);
+  const [placementMessage, setPlacementMessage] = useState("");
+
   useEffect(() => {
     fetch("/api/student/profile")
       .then((res) => res.json())
       .then((data: StudentProfile) => {
+        if (data.placement) {
+          setPlacementStatus(data.placement.status);
+          setCompany(data.placement.company || "");
+          setRole(data.placement.role || "");
+          setPackageLPA(data.placement.packageLPA?.toString() || "");
+          setOfferLetterUrl(data.placement.offerLetterUrl || "");
+        }
         setProfile(data);
         setCgpa(data.cgpa?.toString() || "");
         setTechStack(data.techStack || "");
@@ -82,6 +106,33 @@ export default function StudentDashboard() {
 
   const removeProject = (index: number) => {
     setProjects(projects.filter((_, i) => i !== index));
+  };
+
+  const handleSavePlacement = async () => {
+    if ((placementStatus === "PLACED" || placementStatus === "INTERN") && !offerLetterUrl) {
+      setPlacementMessage("Please upload your offer letter before saving.");
+      return;
+    }
+    setSavingPlacement(true);
+    setPlacementMessage("");
+    const res = await fetch("/api/student/placement", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: placementStatus,
+        company,
+        role,
+        packageLPA,
+        offerLetterUrl,
+      }),
+    });
+    setSavingPlacement(false);
+    if (res.ok) {
+      setPlacementMessage("Placement status updated!");
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setPlacementMessage(data.error || "Failed to update.");
+    }
   };
 
   const handleSave = async () => {
@@ -121,23 +172,24 @@ export default function StudentDashboard() {
         <h1 className="text-2xl font-bold">My Profile</h1>
         <LogoutButton />
       </div>
+
       <div className="mb-6 flex gap-2">
         <input
-         type="text"
-         placeholder="Enter roll number to view a profile"
-         id="rollNoSearch"
-         className="flex-1 rounded border border-gray-300 bg-white p-2 text-gray-900"
-     />
-  <button
-    onClick={() => {
-      const input = document.getElementById("rollNoSearch") as HTMLInputElement;
-      if (input.value) window.location.href = `/profile/${input.value}`;
-    }}
-    className="rounded bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
-  >
-    View
-  </button>
-</div>
+          type="text"
+          placeholder="Enter roll number to view a profile"
+          id="rollNoSearch"
+          className="flex-1 rounded border border-gray-300 bg-white p-2 text-gray-900"
+        />
+        <button
+          onClick={() => {
+            const input = document.getElementById("rollNoSearch") as HTMLInputElement;
+            if (input.value) window.location.href = `/profile/${input.value}`;
+          }}
+          className="rounded bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+        >
+          View
+        </button>
+      </div>
 
       <div className="mb-6 rounded border border-gray-200 p-4">
         <p className="font-semibold">
@@ -306,6 +358,69 @@ export default function StudentDashboard() {
         </button>
 
         {message && <p className="text-sm text-green-600">{message}</p>}
+
+        <hr className="my-8" />
+
+        <h2 className="mb-3 text-xl font-bold">Placement Status</h2>
+
+        <div className="space-y-3 rounded border border-gray-200 p-4">
+          <select
+            value={placementStatus}
+            onChange={(e) => setPlacementStatus(e.target.value as "NOT_PLACED" | "PLACED" | "INTERN")}
+            className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+          >
+            <option value="NOT_PLACED">Not Placed</option>
+            <option value="INTERN">Intern</option>
+            <option value="PLACED">Placed</option>
+          </select>
+
+          {(placementStatus === "PLACED" || placementStatus === "INTERN") && (
+            <>
+              <input
+                type="text"
+                placeholder="Company name"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+              />
+              <input
+                type="text"
+                placeholder="Role (e.g. SDE Intern)"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+              />
+              <input
+                type="number"
+                step="0.1"
+                placeholder="Package (LPA)"
+                value={packageLPA}
+                onChange={(e) => setPackageLPA(e.target.value)}
+                className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+              />
+              <FileUpload
+                label="Offer Letter (proof)"
+                type="offerLetter"
+                accept="application/pdf,image/*"
+                currentUrl={offerLetterUrl}
+                onUploaded={setOfferLetterUrl}
+              />
+            </>
+          )}
+
+          <button
+            onClick={handleSavePlacement}
+            disabled={
+              savingPlacement ||
+              ((placementStatus === "PLACED" || placementStatus === "INTERN") && !offerLetterUrl)
+            }
+            className="w-full rounded bg-indigo-600 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {savingPlacement ? "Saving..." : "Update Placement Status"}
+          </button>
+
+          {placementMessage && <p className="text-sm text-green-600">{placementMessage}</p>}
+        </div>
       </div>
     </div>
   );

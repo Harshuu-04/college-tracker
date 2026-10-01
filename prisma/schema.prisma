@@ -26,6 +26,77 @@ enum PlacementStatus {
   INTERN
 }
 
+enum DriveType {
+  FULL_TIME
+  INTERNSHIP
+}
+
+enum RoundStatus {
+  PENDING
+  CLEARED
+  REJECTED
+}
+
+model Drive {
+  id                   String    @id @default(cuid())
+  companyName          String
+  role                 String
+  type                 DriveType
+  packageLPA           Float?
+  description          String?   @db.Text
+  driveDate            DateTime?
+  registrationDeadline DateTime
+  minCgpa              Float?
+  maxBacklogs          Int?
+  createdAt            DateTime  @default(now())
+
+  eligibleClasses DriveEligibleClass[]
+  rounds          DriveRound[]
+  registrations   DriveRegistration[]
+}
+
+model DriveEligibleClass {
+  id      String @id @default(cuid())
+  driveId String
+  drive   Drive  @relation(fields: [driveId], references: [id])
+  classId String
+  class   Class  @relation(fields: [classId], references: [id])
+
+  @@unique([driveId, classId])
+}
+
+model DriveRound {
+  id      String @id @default(cuid())
+  driveId String
+  drive   Drive  @relation(fields: [driveId], references: [id])
+  name    String
+  order   Int
+
+  results RoundResult[]
+}
+
+model DriveRegistration {
+  id           String   @id @default(cuid())
+  driveId      String
+  drive        Drive    @relation(fields: [driveId], references: [id])
+  studentId    String
+  student      Student  @relation(fields: [studentId], references: [id])
+  registeredAt DateTime @default(now())
+
+  @@unique([driveId, studentId])
+}
+
+model RoundResult {
+  id        String      @id @default(cuid())
+  roundId   String
+  round     DriveRound  @relation(fields: [roundId], references: [id])
+  studentId String
+  student   Student     @relation(fields: [studentId], references: [id])
+  status    RoundStatus @default(PENDING)
+
+  @@unique([roundId, studentId])
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -55,7 +126,8 @@ model Class {
   proctorId String?
   proctor   Teacher? @relation("ProctorClass", fields: [proctorId], references: [id])
 
-  students Student[]
+  students        Student[]
+  driveEligibility DriveEligibleClass[]
 }
 
 model Student {
@@ -67,6 +139,7 @@ model Student {
   class     Class  @relation(fields: [classId], references: [id])
 
   cgpa          Float?
+  backlogs      Int?    @default(0)
   techStack     String?
   resumeUrl     String?
   profilePicUrl String?
@@ -78,7 +151,9 @@ model Student {
   linkedinUrl   String?
   projects      String? @db.Text
 
-  placement Placement?
+  placement     Placement?
+  registrations DriveRegistration[]
+  roundResults  RoundResult[]
 }
 
 model Placement {

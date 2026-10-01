@@ -121,6 +121,23 @@ export default function StudentDashboard() {
         <h1 className="text-2xl font-bold">My Profile</h1>
         <LogoutButton />
       </div>
+      <div className="mb-6 flex gap-2">
+        <input
+         type="text"
+         placeholder="Enter roll number to view a profile"
+         id="rollNoSearch"
+         className="flex-1 rounded border border-gray-300 bg-white p-2 text-gray-900"
+     />
+  <button
+    onClick={() => {
+      const input = document.getElementById("rollNoSearch") as HTMLInputElement;
+      if (input.value) window.location.href = `/profile/${input.value}`;
+    }}
+    className="rounded bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+  >
+    View
+  </button>
+</div>
 
       <div className="mb-6 rounded border border-gray-200 p-4">
         <p className="font-semibold">

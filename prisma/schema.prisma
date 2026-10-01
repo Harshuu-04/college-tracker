@@ -20,21 +20,6 @@ enum Role {
   STUDENT
 }
 
-enum AttendanceStatus {
-  PRESENT
-  ABSENT
-}
-
-enum SubmissionStatus {
-  SUBMITTED
-  NOT_SUBMITTED
-}
-
-enum ExamType {
-  MID_SEM
-  END_SEM
-}
-
 enum PlacementStatus {
   NOT_PLACED
   PLACED
@@ -58,23 +43,19 @@ model Teacher {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
-  subjects       Subject[]
-  proctorOfClass Class[]        @relation("ProctorClass")
-  attendanceLogs Attendance[]
-  assignments    Assignment[]
+  proctorOfClass Class[] @relation("ProctorClass")
 }
 
 model Class {
   id    String @id @default(cuid())
-  name  String // e.g. "CSE 3rd Year - A"
-  year  Int?   // e.g. 3
-  batch String?// e.g. "2027" (graduating year)
+  name  String
+  year  Int?
+  batch String?
 
   proctorId String?
   proctor   Teacher? @relation("ProctorClass", fields: [proctorId], references: [id])
 
   students Student[]
-  subjects Subject[]
 }
 
 model Student {
@@ -86,85 +67,18 @@ model Student {
   class     Class  @relation(fields: [classId], references: [id])
 
   cgpa          Float?
-  techStack     String? // comma-separated, e.g. "React,Node.js,Python"
+  techStack     String?
   resumeUrl     String?
   profilePicUrl String?
-  targetRole    String? // e.g. "SDE", "Data Analyst"
-  targetDomain  String? // e.g. "Backend", "ML"
+  targetRole    String?
+  targetDomain  String?
   githubUrl     String?
   leetcodeUrl   String?
   gfgUrl        String?
   linkedinUrl   String?
-  projects      String? @db.Text // JSON string: [{title, description, link}]
+  projects      String? @db.Text
 
-  attendance  Attendance[]
-  submissions Submission[]
-  marks       Marks[]
-  placement   Placement?
-}
-
-model Subject {
-  id      String @id @default(cuid())
-  name    String
-  classId String
-  class   Class  @relation(fields: [classId], references: [id])
-
-  teacherId String?
-  teacher   Teacher? @relation(fields: [teacherId], references: [id])
-
-  attendance  Attendance[]
-  assignments Assignment[]
-  marks       Marks[]
-}
-
-model Attendance {
-  id        String           @id @default(cuid())
-  date      DateTime
-  status    AttendanceStatus
-  studentId String
-  student   Student          @relation(fields: [studentId], references: [id])
-  subjectId String
-  subject   Subject          @relation(fields: [subjectId], references: [id])
-  teacherId String
-  teacher   Teacher          @relation(fields: [teacherId], references: [id])
-
-  @@unique([studentId, subjectId, date])
-}
-
-model Assignment {
-  id        String   @id @default(cuid())
-  title     String
-  dueDate   DateTime
-  subjectId String
-  subject   Subject  @relation(fields: [subjectId], references: [id])
-  teacherId String
-  teacher   Teacher  @relation(fields: [teacherId], references: [id])
-
-  submissions Submission[]
-}
-
-model Submission {
-  id           String            @id @default(cuid())
-  assignmentId String
-  assignment   Assignment        @relation(fields: [assignmentId], references: [id])
-  studentId    String
-  student      Student           @relation(fields: [studentId], references: [id])
-  status       SubmissionStatus  @default(NOT_SUBMITTED)
-
-  @@unique([assignmentId, studentId])
-}
-
-model Marks {
-  id        String   @id @default(cuid())
-  studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
-  subjectId String
-  subject   Subject  @relation(fields: [subjectId], references: [id])
-  examType  ExamType
-  score     Float
-  maxScore  Float
-
-  @@unique([studentId, subjectId, examType])
+  placement Placement?
 }
 
 model Placement {

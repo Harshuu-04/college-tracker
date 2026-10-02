@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 
 type StudentWithPlacement = {
@@ -69,7 +70,12 @@ export default function AdminDashboard() {
     <div className="mx-auto max-w-3xl p-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Admin Dashboard — Placement Cell</h1>
-        <LogoutButton />
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard/admin/drives" className="text-sm text-blue-600 hover:underline">
+            Manage Drives
+          </Link>
+          <LogoutButton />
+        </div>
       </div>
 
       <div className="space-y-4">

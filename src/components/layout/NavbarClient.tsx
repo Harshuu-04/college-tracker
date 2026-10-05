@@ -89,7 +89,7 @@ export default function NavbarClient({ session }: { session: any }) {
                 Log in
               </Link>
               <Link
-                href="/signup"
+                href="/login"
                 className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-soft hover:bg-slate-800 hover:shadow-md hover:-translate-y-[1px]"
               >
                 Sign up

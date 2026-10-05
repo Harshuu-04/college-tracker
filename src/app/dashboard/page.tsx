@@ -12,6 +12,8 @@ export default async function DashboardPage() {
     redirect("/dashboard/student");
   } else if (session.user.role === "ADMIN") {
     redirect("/dashboard/admin");
+  } else if (session.user.role === "TEACHER") {
+    redirect("/dashboard/teacher");
   }
 
   redirect("/login");

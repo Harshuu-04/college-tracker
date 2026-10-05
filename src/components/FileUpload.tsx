@@ -4,7 +4,7 @@ import { useState } from "react";
 
 type Props = {
   label: string;
-  type: "resume" | "profilePic" | "offerLetter";
+  type: "resume" | "profilePic" | "offerLetter" | "pastRecord" | "classUpload";
   currentUrl?: string | null;
   onUploaded: (url: string) => void;
   accept: string;

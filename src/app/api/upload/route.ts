@@ -22,6 +22,8 @@ export async function POST(req: Request) {
     resume: ["application/pdf"],
     profilePic: ["image/jpeg", "image/png", "image/webp"],
     offerLetter: ["application/pdf", "image/jpeg", "image/png"],
+    pastRecord: ["application/pdf", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv"],
+    classUpload: ["application/pdf", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv"],
   };
 
   if (type && allowedTypes[type] && !allowedTypes[type].includes(file.type)) {

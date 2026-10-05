@@ -106,7 +106,8 @@ model User {
   createdAt DateTime @default(now())
 
   teacher Teacher?
-  student Student?
+  student       Student?
+  committeeMember CommitteeMember?
 }
 
 model Teacher {
@@ -128,6 +129,7 @@ model Class {
 
   students        Student[]
   driveEligibility DriveEligibleClass[]
+  studentUploads   ClassStudentUpload[]
 }
 
 model Student {
@@ -165,4 +167,36 @@ model Placement {
   role          String?
   packageLPA    Float?
   offerLetterUrl String?
+}
+
+enum CommitteeRole {
+  CONVENER
+  CO_CONVENER
+  FACULTY_COORDINATOR
+  HEAD_STUDENT_COORDINATOR
+  STUDENT_COORDINATOR
+}
+
+model CommitteeMember {
+  id        String        @id @default(cuid())
+  userId    String        @unique
+  user      User          @relation(fields: [userId], references: [id])
+  role      CommitteeRole
+  createdAt DateTime      @default(now())
+}
+
+model PastPlacementRecord {
+  id        String   @id @default(cuid())
+  year      Int      @unique
+  fileUrl   String
+  createdAt DateTime @default(now())
+}
+
+model ClassStudentUpload {
+  id        String   @id @default(cuid())
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id])
+  fileUrl   String
+  fileType  String   // "PDF" or "EXCEL"
+  createdAt DateTime @default(now())
 }

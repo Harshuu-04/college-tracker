@@ -14,7 +14,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = credentials.email as string;
         const password = credentials.password as string;
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({ 
+          where: { email },
+          include: { student: true }
+        });
         if (!user) return null;
 
         const isValid = await bcrypt.compare(password, user.password);
@@ -25,6 +28,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role,
+          rollNumber: user.student?.rollNo,
         };
       },
     }),
@@ -35,6 +39,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.role = user.role;
         token.id = user.id;
+        token.rollNumber = (user as any).rollNumber;
       }
       return token;
     },
@@ -42,6 +47,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        (session.user as any).rollNumber = token.rollNumber;
       }
       return session;
     },

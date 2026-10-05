@@ -1,4 +1,5 @@
 import { auth } from "@/../auth";
+import { sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -68,6 +69,33 @@ export async function POST(req: Request) {
       },
     },
   });
+
+    // Find eligible students and notify them
+  const eligibleStudents = await prisma.student.findMany({
+    where: {
+      classId: { in: classIds },
+      ...(minCgpa ? { cgpa: { gte: Number(minCgpa) } } : {}),
+      ...(maxBacklogs !== "" && maxBacklogs !== undefined
+        ? { backlogs: { lte: Number(maxBacklogs) } }
+        : {}),
+    },
+    include: { user: true },
+  });
+
+  const emails = eligibleStudents.map((s) => s.user.email);
+
+  await sendEmail(
+    emails,
+    `New Placement Drive: ${companyName} - ${role}`,
+    `
+      <h2>${companyName} is hiring for ${role}</h2>
+      <p>${description || ""}</p>
+      <p><strong>Type:</strong> ${type === "FULL_TIME" ? "Full Time" : "Internship"}</p>
+      ${packageLPA ? `<p><strong>Package:</strong> ${packageLPA} LPA</p>` : ""}
+      <p><strong>Registration Deadline:</strong> ${new Date(registrationDeadline).toLocaleString()}</p>
+      <p>Log in to the placement portal to register.</p>
+    `
+  );
 
   return NextResponse.json(drive);
 }

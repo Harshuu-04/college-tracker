@@ -28,7 +28,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { studentId, status, company, role } = await req.json();
+  const { studentId, status, company, role, classId } = await req.json();
+
+  if (classId) {
+    await prisma.student.update({
+      where: { id: studentId },
+      data: { classId },
+    });
+  }
 
   const placement = await prisma.placement.upsert({
     where: { studentId },

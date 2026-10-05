@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import LogoutButton from "@/components/LogoutButton";
 import FileUpload from "@/components/FileUpload";
+import Link from "next/link";
 
 type Project = {
   title: string;
@@ -100,9 +99,9 @@ export default function StudentDashboard() {
   };
 
   const updateProject = (index: number, field: keyof Project, value: string) => {
-    const updated = [...projects];
-    updated[index][field] = value;
-    setProjects(updated);
+    const newProjects = [...projects];
+    newProjects[index][field] = value;
+    setProjects(newProjects);
   };
 
   const removeProject = (index: number) => {
@@ -110,10 +109,6 @@ export default function StudentDashboard() {
   };
 
   const handleSavePlacement = async () => {
-    if ((placementStatus === "PLACED" || placementStatus === "INTERN") && !offerLetterUrl) {
-      setPlacementMessage("Please upload your offer letter before saving.");
-      return;
-    }
     setSavingPlacement(true);
     setPlacementMessage("");
     const res = await fetch("/api/student/placement", {
@@ -121,18 +116,18 @@ export default function StudentDashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         status: placementStatus,
-        company,
-        role,
-        packageLPA,
-        offerLetterUrl,
+        company: placementStatus === "NOT_PLACED" ? null : company,
+        role: placementStatus === "NOT_PLACED" ? null : role,
+        packageLPA: placementStatus === "NOT_PLACED" ? null : parseFloat(packageLPA),
+        offerLetterUrl: placementStatus === "NOT_PLACED" ? null : offerLetterUrl,
       }),
     });
     setSavingPlacement(false);
     if (res.ok) {
       setPlacementMessage("Placement status updated!");
+      setTimeout(() => setPlacementMessage(""), 3000);
     } else {
-      const data = await res.json().catch(() => ({}));
-      setPlacementMessage(data.error || "Failed to update.");
+      setPlacementMessage("Failed to update.");
     }
   };
 
@@ -140,10 +135,10 @@ export default function StudentDashboard() {
     setSaving(true);
     setMessage("");
     const res = await fetch("/api/student/profile", {
-      method: "PATCH",
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        cgpa,
+        cgpa: parseFloat(cgpa),
         techStack,
         resumeUrl,
         profilePicUrl,
@@ -158,274 +153,367 @@ export default function StudentDashboard() {
     });
     setSaving(false);
     if (res.ok) {
-      setMessage("Profile saved!");
+      setMessage("Profile saved successfully!");
+      setTimeout(() => setMessage(""), 3000);
     } else {
       setMessage("Failed to save.");
     }
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (!profile) return <div className="p-8">Failed to load profile.</div>;
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-8 w-48 bg-slate-200 rounded"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="h-96 bg-slate-200 rounded-xl"></div>
+            <div className="h-64 bg-slate-200 rounded-xl"></div>
+          </div>
+          <div className="space-y-6">
+            <div className="h-48 bg-slate-200 rounded-xl"></div>
+            <div className="h-64 bg-slate-200 rounded-xl"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) return <div>Failed to load profile.</div>;
 
   return (
-    <div className="mx-auto max-w-2xl p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My Profile</h1>
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/student/drives" className="text-sm text-blue-600 hover:underline">
-            Placement Drives
-          </Link>
-          <LogoutButton />
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl">Student Dashboard</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Manage your profile, resume, and placement status
+          </p>
         </div>
-      </div>
-
-      <div className="mb-6 flex gap-2">
-        <input
-          type="text"
-          placeholder="Enter roll number to view a profile"
-          id="rollNoSearch"
-          className="flex-1 rounded border border-gray-300 bg-white p-2 text-gray-900"
-        />
-        <button
-          onClick={() => {
-            const input = document.getElementById("rollNoSearch") as HTMLInputElement;
-            if (input.value) window.location.href = `/profile/${input.value}`;
-          }}
-          className="rounded bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+        <Link
+          href={`/profile/${profile.rollNo}`}
+          className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-soft"
         >
-          View
-        </button>
+          View Public Profile
+        </Link>
       </div>
 
-      <div className="mb-6 rounded border border-gray-200 p-4">
-        <p className="font-semibold">
-          {profile.rollNo} — {profile.user.name}
-        </p>
-        <p className="text-sm text-gray-500">{profile.class.name}</p>
-        <p className="text-sm text-gray-500">{profile.user.email}</p>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column (Main Form) */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Basic Information */}
+          <div className="rounded-xl card-shadow p-6">
+            <h2 className="text-xl mb-4 border-b border-slate-100 pb-3">Basic Information</h2>
+            
+            <div className="flex flex-col sm:flex-row gap-6 mb-6">
+              <div className="w-full sm:w-1/3">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Profile Picture</label>
+                <FileUpload
+                  type="profilePic"
+                  accept="image/*"
+                  currentUrl={profilePicUrl}
+                  onUploaded={setProfilePicUrl}
+                />
+              </div>
+              <div className="flex-1 space-y-4">
+                <div>
+                  <label className="block text-sm text-slate-500">Name</label>
+                  <div className="font-medium text-slate-900">{profile.user.name}</div>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-500">Roll Number</label>
+                  <div className="font-medium text-slate-900">{profile.rollNo}</div>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-500">Class</label>
+                  <div className="font-medium text-slate-900">{profile.class.name}</div>
+                </div>
+              </div>
+            </div>
 
-      <div className="space-y-4">
-        <FileUpload
-          label="Profile Picture"
-          type="profilePic"
-          accept="image/*"
-          currentUrl={profilePicUrl}
-          onUploaded={setProfilePicUrl}
-        />
-
-        <FileUpload
-          label="Resume (PDF)"
-          type="resume"
-          accept="application/pdf"
-          currentUrl={resumeUrl}
-          onUploaded={setResumeUrl}
-        />
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">CGPA</label>
-          <input
-            type="number"
-            step="0.01"
-            value={cgpa}
-            onChange={(e) => setCgpa(e.target.value)}
-            className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Tech Stack (comma-separated)
-          </label>
-          <input
-            type="text"
-            value={techStack}
-            onChange={(e) => setTechStack(e.target.value)}
-            placeholder="React, Node.js, Python"
-            className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Target Role</label>
-            <input
-              type="text"
-              value={targetRole}
-              onChange={(e) => setTargetRole(e.target.value)}
-              placeholder="SDE"
-              className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Target Domain</label>
-            <input
-              type="text"
-              value={targetDomain}
-              onChange={(e) => setTargetDomain(e.target.value)}
-              placeholder="Backend"
-              className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">GitHub</label>
-            <input
-              type="url"
-              value={githubUrl}
-              onChange={(e) => setGithubUrl(e.target.value)}
-              className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">LinkedIn</label>
-            <input
-              type="url"
-              value={linkedinUrl}
-              onChange={(e) => setLinkedinUrl(e.target.value)}
-              className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">LeetCode</label>
-            <input
-              type="url"
-              value={leetcodeUrl}
-              onChange={(e) => setLeetcodeUrl(e.target.value)}
-              className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">GeeksforGeeks</label>
-            <input
-              type="url"
-              value={gfgUrl}
-              onChange={(e) => setGfgUrl(e.target.value)}
-              className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
-            />
-          </div>
-        </div>
-
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <label className="block text-sm font-medium text-gray-700">Projects</label>
-            <button
-              onClick={addProject}
-              type="button"
-              className="rounded bg-gray-200 px-2 py-1 text-xs font-medium hover:bg-gray-300"
-            >
-              + Add Project
-            </button>
-          </div>
-          <div className="space-y-3">
-            {projects.map((project, index) => (
-              <div key={index} className="space-y-2 rounded border border-gray-200 p-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">CGPA</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={cgpa}
+                  onChange={(e) => setCgpa(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-amber-500 focus:ring-amber-500 sm:text-sm"
+                  placeholder="e.g. 8.5"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Target Role</label>
                 <input
                   type="text"
-                  placeholder="Project title"
-                  value={project.title}
-                  onChange={(e) => updateProject(index, "title", e.target.value)}
-                  className="w-full rounded border border-gray-300 bg-white p-2 text-sm text-gray-900"
+                  value={targetRole}
+                  onChange={(e) => setTargetRole(e.target.value)}
+                  placeholder="e.g. SDE"
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-amber-500 focus:ring-amber-500 sm:text-sm"
                 />
-                <textarea
-                  placeholder="Description"
-                  value={project.description}
-                  onChange={(e) => updateProject(index, "description", e.target.value)}
-                  className="w-full rounded border border-gray-300 bg-white p-2 text-sm text-gray-900"
-                  rows={2}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Target Domain</label>
+                <input
+                  type="text"
+                  value={targetDomain}
+                  onChange={(e) => setTargetDomain(e.target.value)}
+                  placeholder="e.g. Backend"
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-amber-500 focus:ring-amber-500 sm:text-sm"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Tech Stack</label>
+                <input
+                  type="text"
+                  value={techStack}
+                  onChange={(e) => setTechStack(e.target.value)}
+                  placeholder="React, Node.js, Python"
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-amber-500 focus:ring-amber-500 sm:text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Links & Resume */}
+          <div className="rounded-xl card-shadow p-6">
+            <h2 className="text-xl mb-4 border-b border-slate-100 pb-3">Links & Resume</h2>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-700 mb-2">Resume (PDF)</label>
+              <FileUpload
+                type="resume"
+                accept="application/pdf"
+                currentUrl={resumeUrl}
+                onUploaded={setResumeUrl}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">LinkedIn</label>
                 <input
                   type="url"
-                  placeholder="Link (GitHub/live demo)"
-                  value={project.link}
-                  onChange={(e) => updateProject(index, "link", e.target.value)}
-                  className="w-full rounded border border-gray-300 bg-white p-2 text-sm text-gray-900"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  placeholder="https://linkedin.com/in/..."
                 />
-                <button
-                  onClick={() => removeProject(index)}
-                  type="button"
-                  className="text-xs text-red-600 hover:underline"
-                >
-                  Remove
-                </button>
               </div>
-            ))}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">GitHub</label>
+                <input
+                  type="url"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  placeholder="https://github.com/..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">LeetCode</label>
+                <input
+                  type="url"
+                  value={leetcodeUrl}
+                  onChange={(e) => setLeetcodeUrl(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  placeholder="https://leetcode.com/..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">GeeksforGeeks</label>
+                <input
+                  type="url"
+                  value={gfgUrl}
+                  onChange={(e) => setGfgUrl(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  placeholder="https://auth.geeksforgeeks.org/..."
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Projects */}
+          <div className="rounded-xl card-shadow p-6">
+            <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+              <h2 className="text-xl">Projects</h2>
+              <button
+                onClick={addProject}
+                type="button"
+                className="text-sm font-medium text-amber-600 hover:text-amber-700"
+              >
+                + Add Project
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {projects.length === 0 ? (
+                <div className="text-center py-6 text-slate-500 text-sm bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                  No projects added yet. Add a project to stand out!
+                </div>
+              ) : (
+                projects.map((project, index) => (
+                  <div key={index} className="relative space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <button
+                      onClick={() => removeProject(index)}
+                      type="button"
+                      className="absolute right-3 top-3 text-sm text-red-500 hover:text-red-700"
+                    >
+                      Remove
+                    </button>
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Project Title"
+                        value={project.title}
+                        onChange={(e) => updateProject(index, "title", e.target.value)}
+                        className="w-full sm:w-3/4 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
+                      />
+                    </div>
+                    <div>
+                      <textarea
+                        placeholder="Short Description"
+                        value={project.description}
+                        onChange={(e) => updateProject(index, "description", e.target.value)}
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        rows={2}
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="url"
+                        placeholder="Link (GitHub/live demo)"
+                        value={project.link}
+                        onChange={(e) => updateProject(index, "link", e.target.value)}
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-end gap-4 pb-12">
+            {message && <span className="text-sm font-medium text-green-600">{message}</span>}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="rounded-md bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-soft hover:bg-slate-800 disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save Profile"}
+            </button>
           </div>
         </div>
 
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full rounded bg-blue-600 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {saving ? "Saving..." : "Save Profile"}
-        </button>
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Placement Status Card */}
+          <div className="rounded-xl card-shadow p-6 bg-amber-50/50 border-amber-100">
+            <h2 className="text-xl mb-4 border-b border-amber-200 pb-3 text-slate-900">Placement Status</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                <select
+                  value={placementStatus}
+                  onChange={(e) => setPlacementStatus(e.target.value as "NOT_PLACED" | "PLACED" | "INTERN")}
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 sm:text-sm focus:border-amber-500 focus:ring-amber-500"
+                >
+                  <option value="NOT_PLACED">Not Placed</option>
+                  <option value="INTERN">Intern</option>
+                  <option value="PLACED">Placed</option>
+                </select>
+              </div>
 
-        {message && <p className="text-sm text-green-600">{message}</p>}
+              {(placementStatus === "PLACED" || placementStatus === "INTERN") && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Company</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Google"
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. SDE Intern"
+                      value={role}
+                      onChange={(e) => setRole(e.target.value)}
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Package (LPA)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      placeholder="e.g. 12.5"
+                      value={packageLPA}
+                      onChange={(e) => setPackageLPA(e.target.value)}
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Offer Letter Proof</label>
+                    <div className="bg-white p-3 rounded-lg border border-slate-200">
+                      <FileUpload
+                        type="offerLetter"
+                        accept="application/pdf,image/*"
+                        currentUrl={offerLetterUrl}
+                        onUploaded={setOfferLetterUrl}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">Required for verification. Only visible to admins.</p>
+                  </div>
+                </div>
+              )}
 
-        <hr className="my-8" />
-
-        <h2 className="mb-3 text-xl font-bold">Placement Status</h2>
-
-        <div className="space-y-3 rounded border border-gray-200 p-4">
-          <select
-            value={placementStatus}
-            onChange={(e) => setPlacementStatus(e.target.value as "NOT_PLACED" | "PLACED" | "INTERN")}
-            className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
-          >
-            <option value="NOT_PLACED">Not Placed</option>
-            <option value="INTERN">Intern</option>
-            <option value="PLACED">Placed</option>
-          </select>
-
-          {(placementStatus === "PLACED" || placementStatus === "INTERN") && (
-            <>
-              <input
-                type="text"
-                placeholder="Company name"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
-              />
-              <input
-                type="text"
-                placeholder="Role (e.g. SDE Intern)"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
-              />
-              <input
-                type="number"
-                step="0.1"
-                placeholder="Package (LPA)"
-                value={packageLPA}
-                onChange={(e) => setPackageLPA(e.target.value)}
-                className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
-              />
-              <FileUpload
-                label="Offer Letter (proof)"
-                type="offerLetter"
-                accept="application/pdf,image/*"
-                currentUrl={offerLetterUrl}
-                onUploaded={setOfferLetterUrl}
-              />
-            </>
-          )}
-
-          <button
-            onClick={handleSavePlacement}
-            disabled={
-              savingPlacement ||
-              ((placementStatus === "PLACED" || placementStatus === "INTERN") && !offerLetterUrl)
-            }
-            className="w-full rounded bg-indigo-600 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {savingPlacement ? "Saving..." : "Update Placement Status"}
-          </button>
-
-          {placementMessage && <p className="text-sm text-green-600">{placementMessage}</p>}
+              <div className="pt-2">
+                <button
+                  onClick={handleSavePlacement}
+                  disabled={
+                    savingPlacement ||
+                    ((placementStatus === "PLACED" || placementStatus === "INTERN") && !offerLetterUrl)
+                  }
+                  className="w-full rounded-md bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-soft hover:bg-amber-600 disabled:opacity-50 disabled:bg-slate-300"
+                >
+                  {savingPlacement ? "Updating..." : "Update Status"}
+                </button>
+                {placementMessage && (
+                  <p className="mt-2 text-center text-sm font-medium text-green-700">{placementMessage}</p>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Quick Stats / Info */}
+          <div className="rounded-xl card-shadow p-6">
+            <h3 className="text-sm font-medium text-slate-500 mb-4 uppercase tracking-wider">Account Info</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Email</span>
+                <span className="text-slate-900 truncate pl-4">{profile.user.email}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Roll No</span>
+                <span className="text-slate-900">{profile.rollNo}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Profile Completion</span>
+                <span className="text-amber-600 font-medium">
+                  {Math.round(
+                    [cgpa, techStack, resumeUrl, profilePicUrl, targetRole, linkedinUrl].filter(Boolean).length / 6 * 100
+                  )}%
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

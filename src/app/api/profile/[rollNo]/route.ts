@@ -14,10 +14,18 @@ export async function GET(
 
   const { rollNo } = await params;
 
-  const student = await prisma.student.findUnique({
+  let student = await prisma.student.findUnique({
     where: { rollNo },
     include: { user: true, class: true, placement: true },
   });
+
+  if (!student) {
+    // Fallback: If rollNo wasn't found, the string might actually be a userId from an old session
+    student = await prisma.student.findUnique({
+      where: { userId: rollNo },
+      include: { user: true, class: true, placement: true },
+    });
+  }
 
   if (!student) {
     return NextResponse.json({ error: "Student not found" }, { status: 404 });

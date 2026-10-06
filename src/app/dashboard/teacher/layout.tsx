@@ -15,7 +15,7 @@ export default async function TeacherLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-transparent">
       {/* Basic Sidebar for Teacher */}
       <div className="w-64 bg-[#002147] text-white flex flex-col">
         <div className="p-6 border-b border-white/10">

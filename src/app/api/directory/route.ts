@@ -22,7 +22,8 @@ export async function GET(req: Request) {
   if (search) {
     whereClause.OR = [
       { rollNo: { contains: search, mode: 'insensitive' } },
-      { user: { name: { contains: search, mode: 'insensitive' } } }
+      { user: { name: { contains: search, mode: 'insensitive' } } },
+      { user: { email: { contains: search, mode: 'insensitive' } } }
     ];
   }
 

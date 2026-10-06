@@ -56,7 +56,7 @@ export default function ProfileViewPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-slate-50">
+      <div className="flex min-h-screen flex-col bg-transparent">
         <NavbarClient session={null} />
         <div className="mx-auto w-full max-w-4xl p-8 space-y-6 animate-pulse mt-8">
           <div className="h-40 w-full bg-slate-200 rounded-xl"></div>
@@ -71,7 +71,7 @@ export default function ProfileViewPage() {
 
   if (error || !profile) {
     return (
-      <div className="flex min-h-screen flex-col bg-slate-50">
+      <div className="flex min-h-screen flex-col bg-transparent">
         <NavbarClient session={null} />
         <div className="mx-auto w-full max-w-2xl p-8 mt-12 text-center">
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 card-shadow">
@@ -96,7 +96,7 @@ export default function ProfileViewPage() {
   const isPlaced = profile.placement?.status === "PLACED" || profile.placement?.status === "INTERN";
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-transparent">
       <NavbarClient session={null} />
       
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8 space-y-6 mt-4">

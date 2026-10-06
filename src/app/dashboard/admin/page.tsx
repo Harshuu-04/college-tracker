@@ -150,7 +150,8 @@ export default function AdminDashboard() {
       fetchData();
       alert(`Successfully assigned ${student.user.name} as ${getRoleLabel(role)}`);
     } else {
-      alert("Failed to assign.");
+      const errorData = await res.json().catch(() => ({}));
+      alert(`Failed to assign: ${errorData.error || "Unknown error"}`);
     }
   };
 
@@ -197,7 +198,7 @@ export default function AdminDashboard() {
         <form onSubmit={handleSearch} className="flex gap-4 mb-6">
           <input
             type="text"
-            placeholder="Search by name or roll number..."
+            placeholder="Search by name, roll no, or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-[#002147] focus:ring-[#002147]"
@@ -238,17 +239,21 @@ export default function AdminDashboard() {
                         View Profile
                       </Link>
                       
-                      <div className="relative group">
-                        <button className="text-gray-500 hover:text-[#e2a856] text-xs font-semibold px-2 py-1 rounded border border-gray-300">
-                          Assign Role ▾
-                        </button>
-                        <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-100 hidden group-hover:block z-10">
-                          <ul className="py-1 text-xs text-gray-700">
-                            <li><button onClick={() => assignStudentToCommittee(s, "STUDENT_COORDINATOR")} className="block px-4 py-2 hover:bg-gray-100 w-full text-left">Student Coordinator</button></li>
-                            <li><button onClick={() => assignStudentToCommittee(s, "HEAD_STUDENT_COORDINATOR")} className="block px-4 py-2 hover:bg-gray-100 w-full text-left">Head Student Coordinator</button></li>
-                          </ul>
-                        </div>
-                      </div>
+                      <select
+                        className="text-gray-500 hover:text-[#e2a856] text-xs font-semibold px-2 py-1 rounded border border-gray-300 bg-transparent outline-none cursor-pointer"
+                        onChange={(e) => {
+                          const role = e.target.value as CommitteeRole;
+                          if (role) {
+                            assignStudentToCommittee(s, role);
+                            e.target.value = "";
+                          }
+                        }}
+                        defaultValue=""
+                      >
+                        <option value="" disabled>Assign Role ▾</option>
+                        <option value="STUDENT_COORDINATOR">Student Coordinator</option>
+                        <option value="HEAD_STUDENT_COORDINATOR">Head Student Coordinator</option>
+                      </select>
                     </td>
                   </tr>
                 ))}

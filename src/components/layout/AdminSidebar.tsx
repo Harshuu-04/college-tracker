@@ -12,9 +12,7 @@ export default function AdminSidebar({ session }: { session: any }) {
     <div className="flex h-screen w-64 flex-col border-r border-slate-200 bg-white">
       <div className="flex h-16 shrink-0 items-center border-b border-slate-200 px-6">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded bg-slate-900 text-white font-serif font-bold text-lg">
-            M
-          </div>
+          <img src="/logo.jpg" alt="MSIT Logo" className="h-10 w-auto" />
           <span className="font-serif text-lg font-bold tracking-tight text-slate-900">
             Admin Portal
           </span>
@@ -52,6 +50,16 @@ export default function AdminSidebar({ session }: { session: any }) {
             }`}
           >
             Classes
+          </Link>
+          <Link
+            href="/dashboard/admin/teachers"
+            className={`flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-soft ${
+              isActive("/dashboard/admin/teachers")
+                ? "bg-slate-100 text-slate-900"
+                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            }`}
+          >
+            Teachers
           </Link>
         </nav>
       </div>

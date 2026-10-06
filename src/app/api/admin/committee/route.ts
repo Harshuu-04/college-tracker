@@ -34,14 +34,19 @@ export async function POST(req: Request) {
     // Not updating user role blindly to avoid downgrades
   }
 
-  // Assign to committee
-  const member = await prisma.committeeMember.upsert({
-    where: { userId: user.id },
-    update: { role },
-    create: { userId: user.id, role },
-  });
+  try {
+    // Assign to committee
+    const member = await prisma.committeeMember.upsert({
+      where: { userId: user.id },
+      update: { role },
+      create: { userId: user.id, role },
+    });
 
-  return NextResponse.json({ member });
+    return NextResponse.json({ member });
+  } catch (error: any) {
+    console.error("Error assigning to committee:", error);
+    return NextResponse.json({ error: error.message || "Database error" }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: Request) {

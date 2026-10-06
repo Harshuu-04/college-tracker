@@ -88,7 +88,7 @@ export default function AuthPage() {
 
   if (!role) {
     return (
-      <div className="flex min-h-screen flex-col bg-slate-50">
+      <div className="flex min-h-screen flex-col bg-transparent">
         <NavbarClient session={null} />
         <div className="flex flex-1 items-center justify-center px-4 py-12">
           <div className="w-full max-w-2xl text-center space-y-8">
@@ -132,7 +132,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-transparent">
       <NavbarClient session={null} />
       <div className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 sm:p-10 shadow-sm border border-gray-200 relative">

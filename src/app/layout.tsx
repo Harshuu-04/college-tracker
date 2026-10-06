@@ -33,8 +33,20 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${merriweather.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-slate-50 text-slate-900">
-        {children}
+      <body className="min-h-full flex flex-col font-sans bg-slate-50 text-slate-900 relative z-0">
+        {/* Fixed Watermark Background */}
+        <div 
+          className="fixed inset-0 z-0 pointer-events-none "
+          style={{
+            backgroundImage: "url('/watermark.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+        <div className="flex-1 flex flex-col relative z-10">
+          {children}
+        </div>
       </body>
     </html>
   );

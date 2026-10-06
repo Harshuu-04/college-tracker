@@ -18,10 +18,10 @@ export default async function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="flex-1 flex flex-col items-center justify-center text-center px-4 py-20 bg-gradient-to-b from-slate-50 to-slate-100">
+      <main className="flex-1 flex flex-col items-center justify-center text-center px-4 py-20">
         <div className="max-w-3xl space-y-8">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-900 text-white font-serif text-3xl font-bold shadow-lg">
-            M
+          <div className="mx-auto flex justify-center mb-6">
+            <img src="/logo.jpg" alt="MSIT Logo" className="h-24 w-auto drop-shadow-md" />
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl text-slate-900 leading-tight">
             MSIT Training & Placement

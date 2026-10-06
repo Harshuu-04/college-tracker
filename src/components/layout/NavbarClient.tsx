@@ -13,9 +13,7 @@ export default function NavbarClient({ session }: { session: any }) {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-slate-900 text-white font-serif font-bold text-lg">
-              M
-            </div>
+            <img src="/logo.jpg" alt="MSIT Logo" className="h-10 w-auto" />
             <span className="font-serif text-xl font-bold tracking-tight text-slate-900 hidden sm:block">
               MSIT Placements
             </span>
